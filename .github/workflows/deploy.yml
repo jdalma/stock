@@ -1,4 +1,4 @@
-name: Deploy to Amazon ECR
+name: Deploy to Amazon EC2
 
 on:
   push:
@@ -8,6 +8,11 @@ on:
 
 permissions:
   contents: read
+
+env:
+  ECR_REGISTRY: 958972465191.dkr.ecr.ap-northeast-2.amazonaws.com
+  ECR_REPOSITORY: test/stock
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   deploy:
@@ -38,11 +43,31 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         uses: docker/build-push-action@v5
-        env:
-          ECR_REGISTRY: 958972465191.dkr.ecr.ap-northeast-2.amazonaws.com
-          ECR_REPOSITORY: test/stock
-          IMAGE_TAG: ${{ github.sha }}
         with:
           context: .
           push: true
           tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      - name: Deploy to EC2
+        run: |
+          # SSH 키 설정
+          echo "${{ secrets.EC2_SSH_KEY }}" > deploy_key.pem
+          chmod 600 deploy_key.pem
+          
+          # EC2에 접속해서 Docker 이미지 실행
+          ssh -o StrictHostKeyChecking=no -i deploy_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+            # ECR 로그인
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+              docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+          
+            # 기존 컨테이너 중지 및 삭제
+            docker stop app 2>/dev/null || true
+            docker rm app 2>/dev/null || true
+          
+            # 새 이미지 실행
+            docker run -d \
+              --name app \
+              --restart always \
+              -p 80:8080 \
+              ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          ENDSSH
