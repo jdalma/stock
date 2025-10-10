@@ -9,11 +9,11 @@ COPY build.gradle.kts .
 COPY settings.gradle.kts .
 
 # 의존성만 먼저 다운로드 (캐시 활용)
-RUN ./gradlew dependencies --no-daemon
+RUN ./gradlew dependencies --no-daemon --parallel
 
 # 소스 코드 복사 및 빌드
 COPY src src
-RUN ./gradlew bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon --parallel --build-cache
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
