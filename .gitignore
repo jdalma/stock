@@ -38,3 +38,22 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### AWS & Sensitive Info ###
+# AWS credentials and config
+.aws/
+*.pem
+*.key
+
+# Local environment configuration
+.env
+.env.local
+.env.*.local
+env.sh
+
+# SSM tunnel configuration
+ssm-tunnel-config.sh
+
+# Local development overrides
+application-local.yml
+application-local.properties

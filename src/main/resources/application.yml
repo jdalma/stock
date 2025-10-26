@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: stock-test
+  config:
+    import: optional:aws-parameterstore:/
+
+  # DataSource 설정
+  datasource:
+    url: jdbc:mysql://localhost:3306/stockdb?useSSL=true&requireSSL=true
+    username: admin
+    password: ${my-first-database-password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+    show-sql: false
+
+# Actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
