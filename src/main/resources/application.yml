@@ -6,7 +6,7 @@ spring:
 
   # DataSource 설정
   datasource:
-    url: jdbc:mysql://localhost:3306/stockdb?useSSL=true&requireSSL=true
+    url: jdbc:mysql://${my-first-database-host}:3306/stockdb?useSSL=true&requireSSL=true
     username: admin
     password: ${my-first-database-password}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,8 +25,18 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
       base-path: /actuator
   endpoint:
     health:
       show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        product.deserialization.time: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+        product.deserialization.time: 0.5, 0.95, 0.99
