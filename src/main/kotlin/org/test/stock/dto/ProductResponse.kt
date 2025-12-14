@@ -33,3 +33,10 @@ data class ProductSummary(
     val averageRating: Double?,
     val reviewCount: Int
 )
+
+data class CreateProductRequest(
+    val name: String,
+    val category: String,
+    val price: BigDecimal,
+    val brand: String
+)

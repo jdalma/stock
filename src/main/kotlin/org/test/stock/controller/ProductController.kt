@@ -1,8 +1,10 @@
 package org.test.stock.controller
 
 import io.micrometer.core.annotation.Timed
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.test.stock.dto.CreateProductRequest
 import org.test.stock.dto.ProductListResponse
 import org.test.stock.dto.ProductResponse
 import org.test.stock.service.ProductService
@@ -12,6 +14,13 @@ import org.test.stock.service.ProductService
 class ProductController(
     private val productService: ProductService
 ) {
+
+    @PostMapping
+    @Timed(value = "api.product.create", description = "Time taken to create product")
+    fun createProduct(@RequestBody request: CreateProductRequest): ResponseEntity<ProductResponse> {
+        val product = productService.createProduct(request)
+        return ResponseEntity.status(HttpStatus.CREATED).body(product)
+    }
 
     @GetMapping("/{id}")
     @Timed(value = "api.product.get.by.id", description = "Time taken to get product by ID")
