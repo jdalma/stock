@@ -6,11 +6,11 @@
 
 ## 들어가며
 
-"커넥션 풀 사이즈는 몇 개가 적당할까?"
-
-많은 개발자들이 HikariCP의 기본값(10개)을 그대로 사용하거나, 막연히 큰 값을 설정합니다. 하지만 최적의 설정은 애플리케이션의 특성, 쿼리 실행 시간, 동시 사용자 수에 따라 달라집니다.
-
-이 글에서는 **의도적으로 병목 상황을 만들고**, k6 부하 테스트와 Grafana 모니터링을 통해 **임계점을 직접 확인**하면서 각 설정의 역할을 학습합니다.
+병목이 발생하는 경우 어떤 속성을 설정해야 하는지 감조차 없다.  
+기본값을 그대로 사용하거나, 막연히 큰 값을 설정하는 것을 기존 프로젝트에서 봐왔다.    
+하지만 최적의 설정은 애플리케이션의 특성, 쿼리 실행 시간, 동시 사용자 수에 따라 달라지기 때문에 튜닝 연습해보려 한다.  
+  
+그래서 **의도적으로 병목 상황을 만들고**, k6 부하 테스트와 Grafana 모니터링을 통해 **임계점을 직접 확인**하면서 각 설정의 역할과 목적을 이해해보려 한다.  
 
 ---
 
@@ -31,12 +31,9 @@
 // ProductService.kt
 @Transactional(readOnly = true)
 fun getProductById(id: Long): ProductResponse {
-    // 병목 시뮬레이션: 50ms 지연
-    Thread.sleep(50)
-
-    val product = productRepository.findById(id)
-        .orElseThrow { NoSuchElementException("Product not found") }
-    return convertToResponse(product)
+    // 병목 시뮬레이션: 300ms 지연
+    Thread.sleep(300)
+    // ...
 }
 ```
 
@@ -48,13 +45,11 @@ spring:
       maximum-pool-size: 5  # 의도적으로 작게 설정
 ```
 
-**왜 `@Transactional` + `Thread.sleep` 조합인가?**
-
-`@Transactional` 어노테이션이 적용된 메서드는 **트랜잭션 시작 시점에 커넥션을 획득**하고, **메서드 종료 시점까지 보유**합니다. 따라서 `Thread.sleep(50)`은 단순히 스레드를 멈추는 것이 아니라, **50ms 동안 DB 커넥션을 점유**하는 효과를 냅니다.
+DB Connection 반환을 강제로 지연시켜서 부하테스트를 통한 임계점을 찾아보고 조금씩 개선해보자.
 
 ---
 
-## Phase 1: 기본값 상태에서 Baseline 측정
+## Phase 1: 현재 환경에서 임계점 찾기
 
 ### HikariCP 기본값
 
