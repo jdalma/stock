@@ -30,39 +30,33 @@ export const options = {
       executor: 'ramping-vus',
       startVUs: 1,
       stages: [
-        // Warm-up: 서서히 부하 증가
-        { duration: '30s', target: 5 },
+        // Warm-up
+        { duration: '20s', target: 10 },
 
-        // Pool Size 근접 (10개 커넥션)
-        { duration: '1m', target: 10 },
+        // Tomcat 스레드 포화 (max: 20)
+        { duration: '30s', target: 20 },
 
-        // Pool 초과 시작 - 대기 발생 예상
-        { duration: '1m', target: 20 },
-
-        // 스트레스 테스트
-        { duration: '1m', target: 30 },
+        // Tomcat 초과
+        { duration: '30s', target: 40 },
 
         // 고부하
-        { duration: '1m', target: 50 },
-
-        // 극한 부하
-        { duration: '1m', target: 75 },
+        { duration: '30s', target: 70 },
 
         // 최대 부하
-        { duration: '1m', target: 100 },
+        { duration: '30s', target: 100 },
 
         // Cool-down
-        { duration: '30s', target: 0 },
+        { duration: '20s', target: 0 },
       ],
     },
   },
 
   // 성능 임계값 설정
   thresholds: {
-    http_req_duration: ['p(95)<2000'],      // 95%ile 응답시간 < 2초
+    http_req_duration: ['p(95)<3000'],       // 95%ile 응답시간 < 3초
     error_rate: ['rate<0.1'],                // 에러율 < 10%
-    single_product_latency: ['p(95)<1000'],  // 단일 조회 < 1초
-    list_product_latency: ['p(95)<1500'],    // 목록 조회 < 1.5초
+    single_product_latency: ['p(95)<3000'],  // 단일 조회 < 3초
+    list_product_latency: ['p(95)<3000'],    // 목록 조회 < 3초
   },
 };
 
@@ -96,7 +90,7 @@ export default function () {
         return false;
       }
     },
-    'single: response time < 1s': (r) => r.timings.duration < 1000,
+    'single: response time < 3s': (r) => r.timings.duration < 3000,
   });
 
   // 메트릭 기록
@@ -135,7 +129,7 @@ export default function () {
         return false;
       }
     },
-    'list: response time < 1.5s': (r) => r.timings.duration < 1500,
+    'list: response time < 3s': (r) => r.timings.duration < 3000,
   });
 
   // 메트릭 기록
@@ -185,8 +179,8 @@ function generateTextSummary(data) {
 
 🚨 에러 통계
 --------------------------------------------------------------------------------
-  에러율:            ${((metrics.error_rate?.values?.rate || 0) * 100).toFixed(2)}%
-  커넥션 에러:       ${metrics.connection_errors?.values?.count || 0}
+  체크 실패율:       ${((metrics.error_rate?.values?.rate || 0) * 100).toFixed(2)}% (status!=200 또는 응답시간>=3초 또는 파싱실패)
+  서버 에러:         ${metrics.connection_errors?.values?.count || 0} (5xx 에러 또는 연결 실패)
 
 📈 API별 레이턴시
 --------------------------------------------------------------------------------

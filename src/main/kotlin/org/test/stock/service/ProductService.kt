@@ -1,8 +1,7 @@
 package org.test.stock.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.micrometer.core.instrument.MeterRegistry
-import io.micrometer.core.instrument.Timer
+import io.micrometer.core.annotation.Timed
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -11,21 +10,14 @@ import org.springframework.transaction.annotation.Transactional
 import org.test.stock.dto.*
 import org.test.stock.entity.Product
 import org.test.stock.repository.ProductRepository
-import java.util.concurrent.TimeUnit
 
 @Service
 @Transactional(readOnly = true)
 class ProductService(
     private val productRepository: ProductRepository,
-    private val objectMapper: ObjectMapper,
-    private val meterRegistry: MeterRegistry
+    private val objectMapper: ObjectMapper
 ) {
     private val logger = LoggerFactory.getLogger(ProductService::class.java)
-
-    private val deserializationTimer = Timer.builder("product.deserialization.time")
-        .description("Time taken to deserialize product metadata JSON")
-        .tag("operation", "json_deserialization")
-        .register(meterRegistry)
 
     @Transactional
     fun createProduct(request: CreateProductRequest): ProductResponse {
@@ -75,16 +67,21 @@ class ProductService(
         )
     }
 
+    @Timed(value = "service.product.getById", description = "Get product by ID")
+    @Transactional(readOnly = true)
     fun getProductById(id: Long): ProductResponse {
-        logger.info("Fetching product with id: $id")
+        Thread.sleep(300)
+
         val product = productRepository.findById(id)
             .orElseThrow { NoSuchElementException("Product not found with id: $id") }
 
         return convertToResponse(product)
     }
 
+    @Timed(value = "service.product.getAll", description = "Get all products with pagination")
+    @Transactional(readOnly = true)
     fun getAllProducts(page: Int, size: Int): ProductListResponse {
-        logger.info("Fetching products - page: $page, size: $size")
+        Thread.sleep(300)
         val pageable: Pageable = PageRequest.of(page, size)
         val productPage = productRepository.findAll(pageable)
 
@@ -160,27 +157,6 @@ class ProductService(
     }
 
     private fun deserializeMetadata(json: String): ProductMetadata {
-        val startTime = System.nanoTime()
-
-        return try {
-            val metadata = objectMapper.readValue(json, ProductMetadata::class.java)
-            val duration = System.nanoTime() - startTime
-
-            // Record the deserialization time
-            deserializationTimer.record(duration, TimeUnit.NANOSECONDS)
-
-            // Log if deserialization takes too long
-            val durationMs = TimeUnit.NANOSECONDS.toMillis(duration)
-            if (durationMs > 10) {
-                logger.warn("Slow JSON deserialization detected: ${durationMs}ms for ${json.length} bytes")
-            } else {
-                logger.debug("JSON deserialized in ${durationMs}ms")
-            }
-
-            metadata
-        } catch (e: Exception) {
-            logger.error("Failed to deserialize product metadata", e)
-            throw RuntimeException("Failed to deserialize product metadata", e)
-        }
+        return objectMapper.readValue(json, ProductMetadata::class.java)
     }
 }
