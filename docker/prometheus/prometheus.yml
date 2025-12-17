@@ -1,6 +1,6 @@
 global:
-  scrape_interval: 5s
-  evaluation_interval: 5s
+  scrape_interval: 1s
+  evaluation_interval: 1s
 
 scrape_configs:
   # Spring Boot 애플리케이션 메트릭
@@ -8,7 +8,7 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['host.docker.internal:8080']
-    scrape_interval: 5s
+    scrape_interval: 1s
 
   # Prometheus 자체 메트릭
   - job_name: 'prometheus'

@@ -1,6 +1,10 @@
 -- MySQL 초기화 스크립트
 -- 테스트 환경에서 필요한 테이블 생성 및 초기 데이터 삽입
 
+-- 인코딩 설정
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 -- 성능 모니터링을 위한 설정
 SET GLOBAL slow_query_log = 'ON';
 SET GLOBAL long_query_time = 1;

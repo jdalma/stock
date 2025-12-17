@@ -4,22 +4,28 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class ProductMetadata(
-    val descriptions: Map<String, String>, // 다국어 설명 (ko, en, zh, ja)
-    val detailedDescription: Map<String, String>, // 상세 설명
-    val sizeOptions: List<SizeOption>,
-    val colorOptions: List<ColorOption>,
-    val reviews: List<Review>,
-    val styleRecommendations: List<StyleRecommendation>,
-    val materialInfo: MaterialInfo,
-    val careInstructions: Map<String, List<String>>, // 다국어 세탁 방법
-    val shippingPolicy: ShippingPolicy,
-    val returnPolicy: ReturnPolicy,
-    val brandInfo: BrandInfo,
-    val categoryTags: List<String>,
-    val seasonTags: List<String>,
-    val images: List<ImageMetadata>,
-    val relatedProducts: List<String>, // 관련 상품 ID 리스트
-    val inventory: Map<String, InventoryDetail> // "SIZE-COLOR" -> 재고 정보
+    // 간단한 구조 (DB 초기 데이터 호환)
+    val description: String? = null,           // 단일 설명
+    val sizes: List<String>? = null,           // 사이즈 목록
+    val colors: List<String>? = null,          // 색상 목록
+
+    // 복잡한 구조 (선택적)
+    val descriptions: Map<String, String> = emptyMap(), // 다국어 설명 (ko, en, zh, ja)
+    val detailedDescription: Map<String, String> = emptyMap(), // 상세 설명
+    val sizeOptions: List<SizeOption> = emptyList(),
+    val colorOptions: List<ColorOption> = emptyList(),
+    val reviews: List<Review> = emptyList(),
+    val styleRecommendations: List<StyleRecommendation> = emptyList(),
+    val materialInfo: MaterialInfo? = null,
+    val careInstructions: Map<String, List<String>> = emptyMap(), // 다국어 세탁 방법
+    val shippingPolicy: ShippingPolicy? = null,
+    val returnPolicy: ReturnPolicy? = null,
+    val brandInfo: BrandInfo? = null,
+    val categoryTags: List<String> = emptyList(),
+    val seasonTags: List<String> = emptyList(),
+    val images: List<ImageMetadata> = emptyList(),
+    val relatedProducts: List<String> = emptyList(), // 관련 상품 ID 리스트
+    val inventory: Map<String, InventoryDetail> = emptyMap() // "SIZE-COLOR" -> 재고 정보
 )
 
 data class SizeOption(
