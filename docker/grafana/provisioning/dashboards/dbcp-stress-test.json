@@ -85,7 +85,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
       "id": 1,
       "options": {
-        "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" },
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -164,7 +164,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
       "id": 2,
       "options": {
-        "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" },
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -235,13 +235,20 @@
               { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } },
               { "id": "custom.fillOpacity", "value": 0 }
             ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "k6 VUs" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } },
+              { "id": "custom.lineStyle", "value": { "dash": [5, 5], "fill": "dash" } }
+            ]
           }
         ]
       },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
       "id": 3,
       "options": {
-        "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" },
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -262,9 +269,15 @@
           "expr": "tomcat_threads_config_max_threads{name=\"http-nio-8080\"}",
           "legendFormat": "Max Threads",
           "refId": "C"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "k6_vus and on() (time() - timestamp(k6_vus) < 10)",
+          "legendFormat": "k6 VUs",
+          "refId": "D"
         }
       ],
-      "title": "Tomcat Thread Pool (Busy / Current / Max)",
+      "title": "Tomcat Thread Pool & k6 VUs",
       "type": "timeseries"
     },
     {
@@ -314,25 +327,25 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
       "id": 4,
       "options": {
-        "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" },
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_requests_seconds_sum{uri=\"/api/products/{id}\", method=\"GET\"}[1m]) / rate(http_server_requests_seconds_count{uri=\"/api/products/{id}\", method=\"GET\"}[1m]) * 1000",
+          "expr": "sum(rate(http_server_requests_seconds_sum{uri=\"/api/products/{id}\", method=\"GET\"}[1m])) / sum(rate(http_server_requests_seconds_count{uri=\"/api/products/{id}\", method=\"GET\"}[1m])) * 1000",
           "legendFormat": "GET /api/products/{id}",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_requests_seconds_sum{uri=\"/api/products\", method=\"GET\"}[1m]) / rate(http_server_requests_seconds_count{uri=\"/api/products\", method=\"GET\"}[1m]) * 1000",
+          "expr": "sum(rate(http_server_requests_seconds_sum{uri=\"/api/products\", method=\"GET\"}[1m])) / sum(rate(http_server_requests_seconds_count{uri=\"/api/products\", method=\"GET\"}[1m])) * 1000",
           "legendFormat": "GET /api/products (list)",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_requests_seconds_sum{uri=\"/api/products\", method=\"POST\"}[1m]) / rate(http_server_requests_seconds_count{uri=\"/api/products\", method=\"POST\"}[1m]) * 1000",
+          "expr": "sum(rate(http_server_requests_seconds_sum{uri=\"/api/products\", method=\"POST\"}[1m])) / sum(rate(http_server_requests_seconds_count{uri=\"/api/products\", method=\"POST\"}[1m])) * 1000",
           "legendFormat": "POST /api/products",
           "refId": "C"
         }
@@ -367,15 +380,19 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "GET /api/products/{id}" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "GET /api/products (list)" },
+            "matcher": { "id": "byName", "options": "GET /{id} ✓" },
             "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
           },
           {
-            "matcher": { "id": "byName", "options": "POST /api/products" },
+            "matcher": { "id": "byName", "options": "GET /{id} ✗" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "GET /list ✓" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "GET /list ✗" },
             "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
           }
         ]
@@ -383,166 +400,125 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "id": 5,
       "options": {
-        "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" },
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_requests_seconds_count{uri=\"/api/products/{id}\", method=\"GET\"}[1m])",
-          "legendFormat": "GET /api/products/{id}",
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=\"/api/products/{id}\", outcome=\"SUCCESS\"}[1m]))",
+          "legendFormat": "GET /{id} ✓",
           "refId": "A"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_requests_seconds_count{uri=\"/api/products\", method=\"GET\"}[1m])",
-          "legendFormat": "GET /api/products (list)",
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=\"/api/products/{id}\", outcome=~\"SERVER_ERROR|CLIENT_ERROR\"}[1m]))",
+          "legendFormat": "GET /{id} ✗",
           "refId": "B"
         },
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(http_server_requests_seconds_count{uri=\"/api/products\", method=\"POST\"}[1m])",
-          "legendFormat": "POST /api/products",
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=\"/api/products\", method=\"GET\", outcome=\"SUCCESS\"}[1m]))",
+          "legendFormat": "GET /list ✓",
           "refId": "C"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=\"/api/products\", method=\"GET\", outcome=~\"SERVER_ERROR|CLIENT_ERROR\"}[1m]))",
+          "legendFormat": "GET /list ✗",
+          "refId": "D"
         }
       ],
       "title": "Request Rate by Endpoint (req/s)",
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
           "custom": {
             "axisBorderShow": false,
-            "axisLabel": "Time (ms)",
             "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "opacity",
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": { "mode": "none" },
-            "thresholdsStyle": { "mode": "line" }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 500 },
-              { "color": "red", "value": 1000 }
-            ]
-          },
-          "unit": "ms"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "getById (avg)" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "getAll (avg)" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "getById (p95)" },
-            "properties": [
-              { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } },
-              { "id": "custom.lineStyle", "value": { "dash": [5, 5], "fill": "dash" } }
-            ]
-          },
-          {
-            "matcher": { "id": "byName", "options": "getAll (p95)" },
-            "properties": [
-              { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } },
-              { "id": "custom.lineStyle", "value": { "dash": [5, 5], "fill": "dash" } }
-            ]
-          }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 17 },
-      "id": 11,
-      "options": {
-        "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" },
-        "tooltip": { "mode": "multi", "sort": "desc" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(service_product_getById_seconds_sum[1m]) / rate(service_product_getById_seconds_count[1m]) * 1000",
-          "legendFormat": "getById (avg)",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "rate(service_product_getAll_seconds_sum[1m]) / rate(service_product_getAll_seconds_count[1m]) * 1000",
-          "legendFormat": "getAll (avg)",
-          "refId": "B"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum(rate(service_product_getById_seconds_bucket[1m])) by (le)) * 1000",
-          "legendFormat": "getById (p95)",
-          "refId": "C"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum(rate(service_product_getAll_seconds_bucket[1m])) by (le)) * 1000",
-          "legendFormat": "getAll (p95)",
-          "refId": "D"
-        }
-      ],
-      "title": "Service Method Execution Time (avg / p95)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false,
-            "axisLabel": "Exceptions/s",
-            "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "bars",
             "fillOpacity": 80,
             "gradientMode": "none",
             "lineWidth": 1,
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "mode": "normal" },
+            "stacking": { "group": "A", "mode": "normal" },
             "thresholdsStyle": { "mode": "off" }
           },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              { "color": "red", "value": 80 }
             ]
           },
+          "decimals": 0,
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "ERROR" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "WARN" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "INFO" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          }
+        ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 35 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 35 },
       "id": 6,
       "options": {
-        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "right" },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (exception, uri) (increase(http_server_requests_seconds_count{exception!=\"none\", exception!=\"\"}[1m]))",
-          "legendFormat": "{{exception}} [{{uri}}]",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "editorMode": "code",
+          "expr": "sum by(level) (count_over_time({application=\"stock-test\"} | logfmt [1m]))",
+          "legendFormat": "{{level}}",
+          "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Exceptions Count by Type & Endpoint",
+      "title": "Log Count by Level (1m)",
       "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 35 },
+      "id": 12,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "editorMode": "code",
+          "expr": "{application=\"stock-test\", level=\"ERROR\"} | logfmt | line_format \"{{.level}} - {{.msg}}\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Exception Logs",
+      "type": "logs"
     },
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -591,7 +567,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
       "id": 9,
       "options": {
-        "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" },
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -664,7 +640,7 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 },
       "id": 10,
       "options": {
-        "legend": { "calcs": ["last", "max"], "displayMode": "table", "placement": "right" },
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
       "targets": [
@@ -688,6 +664,138 @@
         }
       ],
       "title": "Connection Acquire Percentiles (p50 / p95 / p99)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisLabel": "queries/s",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "QPS (Questions)" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Slow Queries/s" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 43 },
+      "id": 13,
+      "options": {
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(mysql_global_status_questions[1m])",
+          "legendFormat": "QPS (Questions)",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(mysql_global_status_slow_queries[1m])",
+          "legendFormat": "Slow Queries/s",
+          "refId": "B"
+        }
+      ],
+      "title": "MySQL Query Rate (QPS)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisLabel": "threads",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "opacity",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "mode": "none" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 4 },
+              { "color": "red", "value": 8 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Running (CPU Load)" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Connected" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Cached" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 43 },
+      "id": 14,
+      "options": {
+        "legend": { "calcs": ["max"], "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "mysql_global_status_threads_running",
+          "legendFormat": "Running (CPU Load)",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "mysql_global_status_threads_connected",
+          "legendFormat": "Connected",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "mysql_global_status_threads_cached",
+          "legendFormat": "Cached",
+          "refId": "C"
+        }
+      ],
+      "title": "MySQL Thread Activity",
       "type": "timeseries"
     }
   ],

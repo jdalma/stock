@@ -30,6 +30,9 @@ dependencies {
     // Prometheus 메트릭 (HikariCP 모니터링용)
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
+    // Loki 로그 전송
+    implementation("com.github.loki4j:loki-logback-appender:1.5.1")
+
     // AWS Parameter Store - Spring Cloud AWS
     implementation(platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.2.1"))
     implementation("io.awspring.cloud:spring-cloud-aws-starter-parameter-store")
