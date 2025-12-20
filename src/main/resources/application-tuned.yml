@@ -32,9 +32,10 @@ spring:
     #
     hikari:
       pool-name: StockHikariPool
-      maximum-pool-size: 5            # 병목 시뮬레이션용 (기본값: 10)
+      maximum-pool-size: 100
       leak-detection-threshold: 2000  # 커넥션 누수 감지 (2초)
       register-mbeans: true           # JMX MBeans 등록
+      connection-timeout: 3000
   # ===========================================
   # JPA 설정
   # ===========================================

@@ -1,3 +1,8 @@
+server:
+  tomcat:
+    threads:
+      max: 100
+
 spring:
   application:
     name: stock-test
@@ -22,6 +27,8 @@ spring:
 
 # Actuator 설정
 management:
+  server:
+    port: 8081  # 메트릭 전용 포트 (메인 8080과 분리)
   endpoints:
     web:
       exposure:

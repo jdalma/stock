@@ -7,10 +7,16 @@ scrape_configs:
   - job_name: 'spring-boot-app'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:8080']
+      - targets: ['host.docker.internal:8081']
     scrape_interval: 1s
 
   # Prometheus 자체 메트릭
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+
+  # MySQL Exporter
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+    scrape_interval: 5s

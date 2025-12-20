@@ -33,17 +33,17 @@ export const options = {
         // Warm-up
         { duration: '20s', target: 10 },
 
-        // Tomcat 스레드 포화 (max: 20)
-        { duration: '30s', target: 20 },
+        // Tomcat 스레드 포화 (max: 100)
+        { duration: '30s', target: 50 },
 
         // Tomcat 초과
-        { duration: '30s', target: 40 },
+        { duration: '30s', target: 100 },
 
         // 고부하
-        { duration: '30s', target: 70 },
+        { duration: '30s', target: 125 },
 
         // 최대 부하
-        { duration: '30s', target: 100 },
+        { duration: '30s', target: 150 },
 
         // Cool-down
         { duration: '20s', target: 0 },
@@ -105,9 +105,6 @@ export default function () {
     errorRate.add(0);
   }
 
-  // 요청 간 짧은 대기 (실제 사용자 시뮬레이션)
-  sleep(0.1);
-
   // -----------------------------------------
   // 2. 상품 목록 조회 (페이징)
   // -----------------------------------------
@@ -143,50 +140,4 @@ export default function () {
   } else {
     errorRate.add(0);
   }
-
-  // 요청 간 대기
-  sleep(0.1);
-}
-
-// ===========================================
-// 테스트 완료 후 요약 리포트
-// ===========================================
-export function handleSummary(data) {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-
-  return {
-    [`reports/phase1-read-${timestamp}.json`]: JSON.stringify(data, null, 2),
-    stdout: generateTextSummary(data),
-  };
-}
-
-function generateTextSummary(data) {
-  const metrics = data.metrics;
-
-  return `
-================================================================================
-                         Phase 1: 읽기 테스트 결과
-================================================================================
-
-📊 HTTP 요청 통계
---------------------------------------------------------------------------------
-  총 요청 수:        ${metrics.http_reqs?.values?.count || 0}
-  평균 응답 시간:     ${(metrics.http_req_duration?.values?.avg || 0).toFixed(2)}ms
-  P50 응답 시간:     ${(metrics.http_req_duration?.values?.['p(50)'] || 0).toFixed(2)}ms
-  P95 응답 시간:     ${(metrics.http_req_duration?.values?.['p(95)'] || 0).toFixed(2)}ms
-  P99 응답 시간:     ${(metrics.http_req_duration?.values?.['p(99)'] || 0).toFixed(2)}ms
-  최대 응답 시간:     ${(metrics.http_req_duration?.values?.max || 0).toFixed(2)}ms
-
-🚨 에러 통계
---------------------------------------------------------------------------------
-  체크 실패율:       ${((metrics.error_rate?.values?.rate || 0) * 100).toFixed(2)}% (status!=200 또는 응답시간>=3초 또는 파싱실패)
-  서버 에러:         ${metrics.connection_errors?.values?.count || 0} (5xx 에러 또는 연결 실패)
-
-📈 API별 레이턴시
---------------------------------------------------------------------------------
-  단일 상품 조회 P95: ${(metrics.single_product_latency?.values?.['p(95)'] || 0).toFixed(2)}ms
-  상품 목록 조회 P95: ${(metrics.list_product_latency?.values?.['p(95)'] || 0).toFixed(2)}ms
-
-================================================================================
-`;
 }
